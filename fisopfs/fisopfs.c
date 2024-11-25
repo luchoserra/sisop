@@ -38,6 +38,14 @@ struct inode {
 	                                // the path of the parent directory if
 	                                // it's the root, it's an empty string
 };
+struct super_block {
+    struct inode inodes[MAX_INODES];
+    int bitmap_inodes[MAX_INODES];  // 0 = libre, 1 = ocupado
+};
+
+struct super_block super = {};
+// Donde se va a guardar el fs
+char fs_file[MAX_PATH] = "fs.fisopfs";
 
 struct super_block {
 	struct inode inodes[MAX_INODES];
@@ -378,15 +386,24 @@ fisopfs_unlink(const char *path)
 
 	struct inode *inode = &super.inodes[index];
 
+	//me fijo si ese nodo ya esta FREE, entonces no hace falta el unlink
+	if (inode->type ==FREE){
+		fprintf(stderr,"[debug] Error unlink: already free");
+		return -ENOENT;
+	}
+
 	if (inode->type == DIR) {
 		fprintf(stderr, "[debug] Error unlink: %s\n", strerror(errno));
 		errno = EISDIR;
 		return -EISDIR;
 	}
 
+	//Tarea para el hogar: ver si esta bien que se deje liberar inodos con referencias a unlink
+	
 
-	super.bitmap_inodes[index] = FREE;
+	//primero limpio el inodo y despues lo libero
 	memset(inode, 0, sizeof(struct inode));
+	super.bitmap_inodes[index] = FREE;
 
 	return 0;
 }
@@ -439,6 +456,11 @@ fisopfs_write(const char *path,
 	return (int) size_data;
 }
 
+// validacion para ver si ese inodo es hijo del directorio
+static int is_child_inode(const struct inode *dir_inode, const struct inode *child_inode) {
+    return strcmp(child_inode->directory_path, dir_inode->path) == 0;
+}
+
 static int
 fisopfs_readdir(const char *path,
                 void *buffer,
@@ -452,26 +474,24 @@ fisopfs_readdir(const char *path,
 	filler(buffer, "..", NULL, 0);
 	int pos = get_inode_index(path);
 	if (pos == -1) {
-		fprintf(stderr, "[debug] Error readdir: %s\n", strerror(errno));
-		errno = ENOENT;
+		fprintf(stderr, "[debug] Error readdir: %s\n", path);
 		return -ENOENT;
 	}
 
 	struct inode dir_inode = super.inodes[pos];
 
 	if (dir_inode.type != DIR) {
-		fprintf(stderr, "[debug] Error readdir: %s\n", strerror(errno));
-		errno = ENOTDIR;
+		fprintf(stderr, "[debug] Error readdir: %s\n", path);
 		return -ENOTDIR;
 	}
 	dir_inode.last_access = time(NULL);
 
 	for (int i = 1; i < MAX_INODES; i++) {
-		if (super.bitmap_inodes[i] == OCCUPIED) {
-			if (strcmp(super.inodes[i].directory_path,
-			           dir_inode.path) == 0) {
+		if (super.bitmap_inodes[i] == OCCUPIED &&
+            is_child_inode(&dir_inode, &super.inodes[i])) {
+			
 				filler(buffer, super.inodes[i].path, NULL, 0);
-			}
+			
 		}
 	}
 
@@ -595,13 +615,26 @@ fisopfs_destroy(void *private_data)
 {
 	printf("[debug] fisop_destroy\n");
 	FILE *file = fopen(fs_file, "w");
+	//si falla el file open, no deberia dejar que se haga flush y write
 	if (!file) {
 		fprintf(stderr,
 		        "[debug] Error saving filesystem: %s\n",
 		        strerror(errno));
+		return;
 	}
-	fwrite(&super, sizeof(super), 1, file);
-	fflush(file);
+	//agrego verificaciones a estos metodos
+	size_t w = fwrite(&super, sizeof(super), 1, file);
+	if (w!=1){
+		fprintf(stderr, "[debug] Error escribiendo en archivo '%s': %s\n",fs_file,sterror(errno));
+		fclose(file);
+		return;
+	}
+	size_t f = fflush(file);
+	if (f!=0){
+		fprintf(stderr,"[debug] Error flush '%s': %s\n",fs_file,strerror(errno));
+		fclose(file);
+		return;
+	}
 	fclose(file);
 }
 
