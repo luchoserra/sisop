@@ -22,8 +22,11 @@
 #include <errno.h>
 #include <time.h>
 
+// enum inode_type { INODE_FILE, INODE_DIR };
+
 struct inode {
 	int type;                  // -1 = directorio, 1 = archivo
+	// enum inode_type type;
 	mode_t mode;               // permissions
 	size_t size;               // size of the file
 	uid_t uid;                 // user id
@@ -119,33 +122,33 @@ fisopfs_utimens(const char *path, const struct timespec tv[2])
 }
 
 
-// Devuelve el index del proximo inodo libre
-// -ENOSPC si no hay mas espacio
-// -EEXIST si ya existe un inodo con ese path
-int
-next_free_inode_index(const char *path)
-{
-	bool exists = false;
-	int next_free_inode = -ENOSPC;
-	for (int i = 0; i < MAX_INODES && !exists; i++) {
-		if (super.bitmap_inodes[i] == FREE &&
-		    next_free_inode <
-		            0) {  // me quedo con el index del primero libre
-			next_free_inode = i;
-		}
-		if (strcmp(super.inodes[i].path, path) == 0)
-			exists = true;
-	}
-	if (exists) {
-		fprintf(stderr,
-		        "[debug] Error next_free_inode_index: %s\n",
-		        strerror(errno));
-		errno = EEXIST;
-		return -EEXIST;
-	} else {
-		return next_free_inode;
-	}
-}
+// // Devuelve el index del proximo inodo libre
+// // -ENOSPC si no hay mas espacio
+// // -EEXIST si ya existe un inodo con ese path
+// int
+// next_free_inode_index(const char *path)
+// {
+// 	bool exists = false;
+// 	int next_free_inode = -ENOSPC;
+// 	for (int i = 0; i < MAX_INODES && !exists; i++) {
+// 		if (super.bitmap_inodes[i] == FREE &&
+// 		    next_free_inode <
+// 		            0) {  // me quedo con el index del primero libre
+// 			next_free_inode = i;
+// 		}
+// 		if (strcmp(super.inodes[i].path, path) == 0)
+// 			exists = true;
+// 	}
+// 	if (exists) {
+// 		fprintf(stderr,
+// 		        "[debug] Error next_free_inode_index: %s\n",
+// 		        strerror(errno));
+// 		errno = EEXIST;
+// 		return -EEXIST;
+// 	} else {
+// 		return next_free_inode;
+// 	}
+// }
 
 // Modifica el path del inodo pasado, cambiando el '/' por '\0'
 void
