@@ -47,15 +47,6 @@ struct super_block super = {};
 // Donde se va a guardar el fs
 char fs_file[MAX_PATH] = "fs.fisopfs";
 
-struct super_block {
-	struct inode inodes[MAX_INODES];
-	int bitmap_inodes[MAX_INODES];  // 0 = libre, 1 = ocupado
-};
-
-struct super_block super = {};
-
-// Donde se va a guardar el fs
-char fs_file[MAX_PATH] = "fs.fisopfs";
 
 // Remueve el slash del path pasado y devuelve unicamente el nombre del archivo
 // o directorio
@@ -127,33 +118,33 @@ fisopfs_utimens(const char *path, const struct timespec tv[2])
 }
 
 
-// Devuelve el index del proximo inodo libre
-// -ENOSPC si no hay mas espacio
-// -EEXIST si ya existe un inodo con ese path
-int
-next_free_inode_index(const char *path)
-{
-	bool exists = false;
-	int next_free_inode = -ENOSPC;
-	for (int i = 0; i < MAX_INODES && !exists; i++) {
-		if (super.bitmap_inodes[i] == FREE &&
-		    next_free_inode <
-		            0) {  // me quedo con el index del primero libre
-			next_free_inode = i;
-		}
-		if (strcmp(super.inodes[i].path, path) == 0)
-			exists = true;
-	}
-	if (exists) {
-		fprintf(stderr,
-		        "[debug] Error next_free_inode_index: %s\n",
-		        strerror(errno));
-		errno = EEXIST;
-		return -EEXIST;
-	} else {
-		return next_free_inode;
-	}
-}
+// // Devuelve el index del proximo inodo libre
+// // -ENOSPC si no hay mas espacio
+// // -EEXIST si ya existe un inodo con ese path
+// int
+// next_free_inode_index(const char *path)
+// {
+// 	bool exists = false;
+// 	int next_free_inode = -ENOSPC;
+// 	for (int i = 0; i < MAX_INODES && !exists; i++) {
+// 		if (super.bitmap_inodes[i] == FREE &&
+// 		    next_free_inode <
+// 		            0) {  // me quedo con el index del primero libre
+// 			next_free_inode = i;
+// 		}
+// 		if (strcmp(super.inodes[i].path, path) == 0)
+// 			exists = true;
+// 	}
+// 	if (exists) {
+// 		fprintf(stderr,
+// 		        "[debug] Error next_free_inode_index: %s\n",
+// 		        strerror(errno));
+// 		errno = EEXIST;
+// 		return -EEXIST;
+// 	} else {
+// 		return next_free_inode;
+// 	}
+// }
 
 // Modifica el path del inodo pasado, cambiando el '/' por '\0'
 void
@@ -625,13 +616,13 @@ fisopfs_destroy(void *private_data)
 	//agrego verificaciones a estos metodos
 	size_t w = fwrite(&super, sizeof(super), 1, file);
 	if (w!=1){
-		fprintf(stderr, "[debug] Error escribiendo en archivo '%s': %s\n",fs_file,sterror(errno));
+		fprintf(stderr, "[debug] Error escribiendo en archivo '%s': %s\n",fs_file, strerror(errno));
 		fclose(file);
 		return;
 	}
 	size_t f = fflush(file);
 	if (f!=0){
-		fprintf(stderr,"[debug] Error flush '%s': %s\n",fs_file,strerror(errno));
+		fprintf(stderr,"[debug] Error flush '%s': %s\n",fs_file, strerror(errno));
 		fclose(file);
 		return;
 	}
