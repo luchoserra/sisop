@@ -50,10 +50,6 @@ struct super_block super = {};
 // Donde se va a guardar el fs
 char fs_file[MAX_PATH] = "fs.fisopfs";
 
-
-struct super_block super = {};
-// Donde se va a guardar el fs
-char fs_file[MAX_PATH] = "fs.fisopfs";
 // Remueve el slash del path pasado y devuelve unicamente el nombre del archivo
 // o directorio
 char *
