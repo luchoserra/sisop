@@ -19,6 +19,8 @@
         "sstream": "c",
         "streambuf": "c",
         "type_traits": "c",
-        "tuple": "c"
+        "tuple": "c",
+        "stat.h": "c",
+        "errno.h": "c"
     }
 }
