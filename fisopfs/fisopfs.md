@@ -61,6 +61,8 @@ Modificación: 2024-11-27 11:48:46.047617470 -0300
 
 ```
 
+![imagen 1](./capturas/getattr.png)
+
 ### fisops_rmdir
 Prueba simple para ver que se elimina el directorio:
 ```
@@ -69,17 +71,27 @@ Prueba simple para ver que se elimina el directorio:
 /prueba$ ls
 /prueba$ 
 ```
+
+![imagen 2](./capturas/prueba_simple_rmdir.png)
+
 Prueba para ver que sucede si no existe el directorio:
 ```
 /prueba$ rmdir /noneexistent
 rmdir: fallo al borrar '/noneexistent': No existe el archivo o el directorio 
 ```
+
+![imagen 3](./capturas/rmdir_error.png)
+
 Prueba donde se intenta eliminar un archivo y no un directorio:
 ```
+![imagen 1](./capturas/getattr.png)
 /prueba$ touch file
 /prueba$ rmdir file
 rmdir: fallo al borrar 'file': No es un directorio
 ```
+
+![imagen 4](./capturas/rmdir_eliminar_arch.png)
+
 Prueba donde se intenta eliminar un directorio no vacio:
 ```
 /prueba$ mkdir noneemptydir
@@ -88,6 +100,8 @@ Prueba donde se intenta eliminar un directorio no vacio:
 rmdir: fallo al borrar 'noneemptydir': El directorio no esta vacio
 ```
 
+![imagen 1](./capturas/rmdir_dir_no_vacio.png)
+
 ### fisops_write
 Prueba simple donde se intenta escribir un archivo
 ```
@@ -95,6 +109,9 @@ Prueba simple donde se intenta escribir un archivo
 /prueba$ cat testfile.txt
 Este es un test
 ```
+
+![imagen 1](./capturas/write_test_simple.png)
+
 Luego intentamos escribir en un archivo ya creado mas cosas en el directorio, al principio y al final:
 ```
 /prueba$ echo 'test' > testfile.txt
@@ -108,6 +125,9 @@ Hola Mundo
 test
 Hola!
 ```
+
+![imagen 1](./capturas/write_archivo_ya_creado.png)
+
 En esta prueba se intenta escribir un archivo en otro directorio:
 ```
 /prueba$ mkdir new
@@ -117,11 +137,15 @@ bash: /new/test.txt: NO existe el archivo o el directorio
 /prueba$ cat new/test.txt
 hola de nuevo
 ```
+
+![imagen 1](./capturas/write_directorio.png)
+
 En esta prueba se intenta escribir en algo que no es un archivo:
 ```
 /prueba$ echo "Este es un texto" > testdir/
 bash: testdir/: Es un directorio
 ```
+![imagen 1](./capturas/write_no_archivo.png)
 ### fisopfs_readdir
 
 ### fisopfs_unlink
