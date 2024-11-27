@@ -37,9 +37,11 @@ hola.txt
 ```
 
 ### fisops_destroy
-
-Primero, montar sobre la terminal como se indico previamente. Luego se puede modificar, crear o eliminar archivos con comandos como cat,touch,echo. Ejemplo, estando sobre el directorio prueba: 'touch mnt/test_destroy.txt' 'touch mnt/test_destroy.txt' o 'cat mnt/test_destroy' entre otros. Luego se debe desmontar siguiendo el comando 'sudo umount prueba'
-
+```
+Primero, montar sobre la terminal como se indico previamente. Luego se puede modificar, crear o eliminar archivos con comandos como cat,touch,echo.
+Ejemplo, estando sobre el directorio prueba: 'touch mnt/test_destroy.txt' 'touch mnt/test_destroy.txt' o 'cat mnt/test_destroy' entre otros. L
+uego se debe desmontar siguiendo el comando 'sudo umount prueba'
+```
 
 ### fisops_getattr
 
