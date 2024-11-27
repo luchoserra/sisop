@@ -51,6 +51,9 @@ struct super_block super = {};
 char fs_file[MAX_PATH] = "fs.fisopfs";
 
 
+struct super_block super = {};
+// Donde se va a guardar el fs
+char fs_file[MAX_PATH] = "fs.fisopfs";
 // Remueve el slash del path pasado y devuelve unicamente el nombre del archivo
 // o directorio
 char *
@@ -269,7 +272,7 @@ fisopfs_getattr(const char *path, struct stat *st)
 
 	int index_inodo = get_inode_index(path);
 	if (index_inodo == -1) {
-		fprintf(stderr, "[debug] Getattr: %s\n", strerror(errno));
+		fprintf(stderr, "[debug] Getattr error: %s\n", strerror(errno));
 		errno = ENOENT;
 		return -ENOENT;
 	}
@@ -403,21 +406,18 @@ fisopfs_unlink(const char *path)
 }
 
 int
-fisopfs_write(const char *path,
-              const char *data,
-              size_t size_data,
-              off_t offset,
-              struct fuse_file_info *fuse_info)
+fisopfs_write(const char *path,const char *data,size_t size_data,off_t offset,struct fuse_file_info *fuse_info)
 {
 	printf("[debug] fisops_write (%s) \n", path);
-	size_t sum = offset + size_data;
-	if (sum > MAX_CONTENT) {
+	
+	if (offset + size_data > MAX_CONTENT) {
 		fprintf(stderr, "[debug] Error write: %s\n", strerror(errno));
 		errno = EFBIG;
 		return -EFBIG;
 	}
+
 	int inode_index = get_inode_index(path);
-	if (inode_index < 0) {  // si no existe el archivo, lo creo
+	if (inode_index < 0) {  
 		int result = fisopfs_create(path, 33204, fuse_info);
 		if (result < 0)
 			return result;
@@ -441,9 +441,10 @@ fisopfs_write(const char *path,
 		return -EACCES;
 	}
 
-	strncpy(inode->content + offset, data, size_data);
+	memcpy(inode->content + offset, data, size_data);
 	inode->last_access = time(NULL);
 	inode->last_modification = time(NULL);
+	
 	inode->size = strlen(inode->content);
 	inode->content[inode->size] = '\0';
 
@@ -526,34 +527,35 @@ fisopfs_rmdir(const char *path)
 {
 	printf("[debug] fisopfs_rmdir - path: %s\n", path);
 
-	int i = get_inode_index(path);
-	if (i < 0)
-		return i;
-
-	struct inode *inode = &super.inodes[i];
+	int index = get_inode_index(path);
+	if (index < 0) {
+        fprintf(stderr, "[debug] rmdir failed: path not found (%s)\n", strerror(ENOENT));
+        errno = ENOENT;
+		return -ENOENT;
+    }
+	struct inode *inode = &super.inodes[index];
+	
+	if (inode->type != DIR) {
+		fprintf(stderr, "[debug] rmdir failed: not a directory (%s)\n", strerror(ENOTDIR));
+		errno = ENOTDIR;
+		return -ENOTDIR;
+	}
+	
 	int nfiles = 0;
 	struct inode **files = files_in_dir(path, &nfiles);
 	if (!files) {
-		fprintf(stderr,
-		        "[debug] Error rmdir when allocating memory for path: "
-		        "%s\n",
-		        strerror(errno));
+		fprintf(stderr, "[debug] rmdir failed: memory allocation error (%s)\n", strerror(ENOMEM));
 		errno = ENOMEM;
 		return -ENOMEM;
 	}
 	free(files);
-	if (inode->type != DIR) {
-		fprintf(stderr, "[debug] Error rmdir: %s\n", strerror(errno));
-		errno = ENOTDIR;
-		return -ENOTDIR;
-	}
-
+	
 	if (nfiles > 0) {
-		fprintf(stderr, "[debug] Error rmdir: %s\n", strerror(errno));
+		fprintf(stderr, "[debug] rmdir failed: directory not empty (%s)\n", strerror(ENOTEMPTY));
 		errno = ENOTEMPTY;
 		return -ENOTEMPTY;
 	}
-	super.bitmap_inodes[i] = FREE;
+	super.bitmap_inodes[index] = FREE;
 	memset(inode, 0, sizeof(struct inode));
 	return 0;
 }
