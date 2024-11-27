@@ -22,8 +22,11 @@
 #include <errno.h>
 #include <time.h>
 
+// enum inode_type { INODE_FILE, INODE_DIR };
+
 struct inode {
 	int type;                  // -1 = directorio, 1 = archivo
+	// enum inode_type type;
 	mode_t mode;               // permissions
 	size_t size;               // size of the file
 	uid_t uid;                 // user id
