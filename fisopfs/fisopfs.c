@@ -41,18 +41,18 @@ struct inode {
 	                                // the path of the parent directory if
 	                                // it's the root, it's an empty string
 };
+
 struct super_block {
     struct inode inodes[MAX_INODES];
     int bitmap_inodes[MAX_INODES];  // 0 = libre, 1 = ocupado
 };
 
 struct super_block super = {};
+
 // Donde se va a guardar el fs
 char fs_file[MAX_PATH] = "fs.fisopfs";
 
-// Remueve el slash del path pasado y devuelve unicamente el nombre del archivo
-// o directorio
-
+/* AUXILIARES */
 
 char *
 remove_slash(const char *path)
@@ -84,73 +84,6 @@ remove_slash(const char *path)
 	return absolute_path;
 }
 
-// Devuelve el index del inodo que tiene el path pasado
-// -1 si no existe
-int
-get_inode_index(const char *path)
-{
-	if (strcmp(path, ROOT_PATH) == 0)
-		return 0;
-	char *path_without_root_slash = remove_slash(path);
-	if (!path_without_root_slash)
-		return -1;
-	for (int i = 0; i < MAX_INODES; i++) {
-		if (strcmp(path_without_root_slash, super.inodes[i].path) == 0) {
-			return i;
-		}
-	}
-	free(path_without_root_slash);
-	return -1;
-}
-
-/* Cosas asumidas fin Alto. */
-
-int
-fisopfs_utimens(const char *path, const struct timespec tv[2])
-{
-	int index_inodo = get_inode_index(path);
-	if (index_inodo == -1) {
-		fprintf(stderr, "[debug] Error utimens: %s\n", strerror(errno));
-		errno = ENOENT;
-		return -ENOENT;
-	}
-	struct inode *inode = &super.inodes[index_inodo];
-
-	inode->last_access = tv[0].tv_sec;
-	inode->last_modification = tv[1].tv_sec;
-	return 0;
-}
-
-
-// // Devuelve el index del proximo inodo libre
-// // -ENOSPC si no hay mas espacio
-// // -EEXIST si ya existe un inodo con ese path
-// int
-// next_free_inode_index(const char *path)
-// {
-// 	bool exists = false;
-// 	int next_free_inode = -ENOSPC;
-// 	for (int i = 0; i < MAX_INODES && !exists; i++) {
-// 		if (super.bitmap_inodes[i] == FREE &&
-// 		    next_free_inode <
-// 		            0) {  // me quedo con el index del primero libre
-// 			next_free_inode = i;
-// 		}
-// 		if (strcmp(super.inodes[i].path, path) == 0)
-// 			exists = true;
-// 	}
-// 	if (exists) {
-// 		fprintf(stderr,
-// 		        "[debug] Error next_free_inode_index: %s\n",
-// 		        strerror(errno));
-// 		errno = EEXIST;
-// 		return -EEXIST;
-// 	} else {
-// 		return next_free_inode;
-// 	}
-// }
-
-// Modifica el path del inodo pasado, cambiando el '/' por '\0'
 void
 get_parent_path(char *parent_path)
 {
@@ -162,8 +95,9 @@ get_parent_path(char *parent_path)
 		parent_path[0] = '\0';
 }
 
-
-const char* remove_slashh(const char* path) {
+const char* 
+remove_slashh(const char* path) 
+{
     if (!path || *path == '\0') {
         return NULL; // Path inválido
     }
@@ -176,7 +110,9 @@ const char* remove_slashh(const char* path) {
     return last_slash + 1; // Devolver el nombre del archivo o directorio
 }
 
-int next_free_inode_index(const char *path) {
+int 
+next_free_inode_index(const char *path)
+{
     for (int i = 0; i < MAX_INODES; i++) {
         // Si el inodo ya existe, devolver error
         if (strcmp(super.inodes[i].path, path) == 0) {
@@ -196,7 +132,7 @@ int next_free_inode_index(const char *path) {
     return -ENOSPC;
 }
 
-int
+int 
 new_inode(const char *path, mode_t mode, int type)
 {
 	if (strlen(path) - 1 > MAX_CONTENT) {
@@ -233,80 +169,23 @@ new_inode(const char *path, mode_t mode, int type)
         char parent_path[MAX_PATH];
         memcpy(parent_path, path + 1, strlen(path) - 1);
         parent_path[strlen(path) - 1] = '\0';
-    if (type == FILE_T) {
-        char parent_path[MAX_PATH];
-        memcpy(parent_path, path + 1, strlen(path) - 1);
-        parent_path[strlen(path) - 1] = '\0';
 
-        get_parent_path(parent_path);
         get_parent_path(parent_path);
 
         if (strlen(parent_path) == 0) {
             strcpy(parent_path, ROOT_PATH);
         }
-        if (strlen(parent_path) == 0) {
-            strcpy(parent_path, ROOT_PATH);
-        }
 
         strcpy(new_inode.directory_path, parent_path);
-        strcpy(new_inode.directory_path, parent_path);
 
-    } else {
-        strcpy(new_inode.directory_path, ROOT_PATH);
-    }
     } else {
         strcpy(new_inode.directory_path, ROOT_PATH);
     }
 
     super.inodes[i] = new_inode;
     super.bitmap_inodes[i] = OCCUPIED;
-    super.inodes[i] = new_inode;
-    super.bitmap_inodes[i] = OCCUPIED;
 
     return 0;
-    return 0;
-}
-
-
-
-static int
-fisopfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
-{
-	printf("[debug] fisopfs_touch - path: %s\n", path);
-
-	return new_inode(path, mode, FILE_T);
-}
-
-
-static int
-fisopfs_getattr(const char *path, struct stat *st)
-{
-	printf("[debug] fisopfs_getattr - path: %s\n", path);
-
-	int index_inodo = get_inode_index(path);
-	if (index_inodo == -1) {
-		fprintf(stderr, "[debug] Getattr error: %s\n", strerror(errno));
-		errno = ENOENT;
-		return -ENOENT;
-	}
-	struct inode inode = super.inodes[index_inodo];
-	st->st_dev = 0;
-	st->st_ino = index_inodo;
-	st->st_uid = inode.uid;
-	st->st_mode = inode.mode;
-	st->st_atime = inode.last_access;
-	st->st_mtime = inode.last_modification;
-	st->st_ctime = inode.creation_time;
-	st->st_size = inode.size;
-	st->st_gid = inode.gid;
-	st->st_nlink = 2;
-	st->st_mode = __S_IFDIR | 0755;
-	if (inode.type == FILE_T) {
-		st->st_mode = __S_IFREG | 0644;
-		st->st_nlink = 1;
-	}
-
-	return 0;
 }
 
 struct inode* find_inode(const char* path) {
@@ -339,6 +218,102 @@ struct inode* find_inode(const char* path) {
 
     // Si no se encuentra, retornar NULL
     return NULL;
+}
+
+int
+get_inode_index(const char *path)
+{
+	// Validar entrada
+    if (!path || strcmp(path, "") == 0) {
+        return -1; // Path inválido
+    }
+
+    // Manejar el caso especial del directorio raíz
+    if (strcmp(path, ROOT_PATH) == 0) {
+        return 0; // El primer inodo es el root
+    }
+
+    // Obtener el nombre del archivo/directorio sin slashes
+    const char* name = remove_slashh(path);
+    if (!name) {
+        return -1; // Error procesando el path
+    }
+
+    // Buscar el inodo en el super block
+    for (int i = 0; i < MAX_INODES; i++) {
+        // Verificar si el inodo está ocupado en el bitmap
+        if (super.bitmap_inodes[i] == 1) {
+            // Comparar el nombre del archivo/directorio
+            if (strcmp(name, super.inodes[i].path) == 0) {
+                return i; // Retornar puntero al inodo encontrado
+            }
+        }
+    }
+
+    // Si no se encuentra, retornar NULL
+    return -1;
+}
+
+// validacion para ver si ese inodo es hijo del directorio
+static int is_child_inode(const struct inode *dir_inode, const struct inode *child_inode) {
+    return strcmp(child_inode->directory_path, dir_inode->path) == 0;
+}
+
+/* */
+
+int
+fisopfs_utimens(const char *path, const struct timespec tv[2])
+{
+	struct inode* inode = find_inode(path);
+	if (!inode) {
+		fprintf(stderr, "[debug] Error utimens: %s\n", strerror(errno));
+		errno = ENOENT;
+		return -ENOENT;
+	}
+
+	inode->last_access = tv[0].tv_sec;
+	inode->last_modification = tv[1].tv_sec;
+	return 0;
+}
+
+static int
+fisopfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+{
+	printf("[debug] fisopfs_touch - path: %s\n", path);
+
+	return new_inode(path, mode, FILE_T);
+}
+
+static int
+fisopfs_getattr(const char *path, struct stat *st)
+{
+	printf("[debug] fisopfs_getattr - path: %s\n", path);
+
+	int index_inodo = get_inode_index(path);
+	if (index_inodo == -1) {
+		fprintf(stderr, "[debug] Getattr error: %s\n", strerror(errno));
+		errno = ENOENT;
+		return -ENOENT;
+	}
+	struct inode inode = super.inodes[index_inodo];
+
+	st->st_dev = 0;
+	st->st_ino = index_inodo;
+	st->st_uid = inode.uid;
+	st->st_mode = inode.mode;
+	st->st_atime = inode.last_access;
+	st->st_mtime = inode.last_modification;
+	st->st_ctime = inode.creation_time;
+	st->st_size = inode.size;
+	st->st_gid = inode.gid;
+	st->st_nlink = 2;
+	st->st_mode = __S_IFDIR | 0755;
+	if (inode.type == FILE_T) {
+		st->st_mode = __S_IFREG | 0644;
+		st->st_nlink = 1;
+	}
+
+	return 0;
 }
 
 /* Read size bytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details. Returns the number of bytes transferred, or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem.
@@ -386,6 +361,7 @@ static int
 fisopfs_unlink(const char *path)
 {
 	printf("[debug] fisopfs_unlink(%s)\n", path);
+	
 	int index = get_inode_index(path);
 	if (index == -1) {
 		fprintf(stderr, "[debug] Error unlink: %s\n", strerror(errno));
@@ -393,10 +369,9 @@ fisopfs_unlink(const char *path)
 		return -ENOENT;
 	}
 
-
 	struct inode *inode = &super.inodes[index];
 
-	//me fijo si ese nodo ya esta FREE, entonces no hace falta el unlink
+	// me fijo si ese nodo ya esta FREE, entonces no hace falta el unlink
 	if (inode->type ==FREE){
 		fprintf(stderr,"[debug] Error unlink: already free");
 		return -ENOENT;
@@ -408,10 +383,7 @@ fisopfs_unlink(const char *path)
 		return -EISDIR;
 	}
 
-	//Tarea para el hogar: ver si esta bien que se deje liberar inodos con referencias a unlink
-	
-
-	//primero limpio el inodo y despues lo libero
+	// primero limpio el inodo y despues lo libero
 	memset(inode, 0, sizeof(struct inode));
 	super.bitmap_inodes[index] = FREE;
 
@@ -436,12 +408,14 @@ fisopfs_write(const char *path,const char *data,size_t size_data,off_t offset,st
 			return result;
 		inode_index = get_inode_index(path);
 	}
+
 	if (inode_index < 0) {
 		fprintf(stderr, "[debug] Error write: %s\n", strerror(errno));
 		errno = ENOENT;
 		return -ENOENT;
 	}
 	struct inode *inode = &super.inodes[inode_index];
+	
 	if (inode->size < offset) {
 		fprintf(stderr, "[debug] Error write: %s\n", strerror(errno));
 		errno = EINVAL;
@@ -464,11 +438,6 @@ fisopfs_write(const char *path,const char *data,size_t size_data,off_t offset,st
 	return (int) size_data;
 }
 
-// validacion para ver si ese inodo es hijo del directorio
-static int is_child_inode(const struct inode *dir_inode, const struct inode *child_inode) {
-    return strcmp(child_inode->directory_path, dir_inode->path) == 0;
-}
-
 static int
 fisopfs_readdir(const char *path,
                 void *buffer,
@@ -480,23 +449,24 @@ fisopfs_readdir(const char *path,
 
 	filler(buffer, ".", NULL, 0);
 	filler(buffer, "..", NULL, 0);
-	int pos = get_inode_index(path);
-	if (pos == -1) {
-		fprintf(stderr, "[debug] Error readdir: %s\n", path);
+	
+	struct inode* inode = find_inode(path);
+	if (!inode) {
+		fprintf(stderr, "[debug] Error read: %s\n", strerror(errno));
+		errno = ENOENT;
 		return -ENOENT;
 	}
 
-	struct inode dir_inode = super.inodes[pos];
-
-	if (dir_inode.type != DIR) {
+	if (inode->type != DIR) {
 		fprintf(stderr, "[debug] Error readdir: %s\n", path);
 		return -ENOTDIR;
 	}
-	dir_inode.last_access = time(NULL);
+	
+	inode->last_access = time(NULL);
 
 	for (int i = 1; i < MAX_INODES; i++) {
 		if (super.bitmap_inodes[i] == OCCUPIED &&
-            is_child_inode(&dir_inode, &super.inodes[i])) {
+            is_child_inode(&inode, &super.inodes[i])) {
 			
 				filler(buffer, super.inodes[i].path, NULL, 0);
 			
@@ -628,27 +598,6 @@ static int fisopfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
     
     return 0;
 }
-
-// void *
-// fisopfs_init(struct fuse_conn_info *conn)
-// {
-// 	printf("[debug] fisop_init\n");
-
-// 	FILE *file = fopen(fs_file, "r");
-// 	if (!file) {
-// 		initialize_filesystem();
-// 	} else {
-// 		int i = fread(&super, sizeof(super), 1, file);
-// 		if (i != 1) {
-// 			fprintf(stderr,
-// 			        "[debug] Error init: %s\n",
-// 			        strerror(errno));
-// 			return NULL;
-// 		}
-// 		fclose(file);
-// 	}
-// 	return 0;
-// }
 
 void
 fisopfs_destroy(void *private_data)
