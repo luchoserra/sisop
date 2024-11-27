@@ -61,7 +61,7 @@ Modificación: 2024-11-27 11:48:46.047617470 -0300
 
 ```
 
-![imagen 1](./capturas/getattr.png)
+![imagen getattr](./capturas/getattr.png)
 
 ### fisops_rmdir
 Prueba simple para ver que se elimina el directorio:
@@ -72,7 +72,7 @@ Prueba simple para ver que se elimina el directorio:
 /prueba$ 
 ```
 
-![imagen 2](./capturas/prueba_simple_rmdir.png)
+![imagen prueba_simple_rmdir](./capturas/prueba_simple_rmdir.png)
 
 Prueba para ver que sucede si no existe el directorio:
 ```
@@ -80,7 +80,7 @@ Prueba para ver que sucede si no existe el directorio:
 rmdir: fallo al borrar '/noneexistent': No existe el archivo o el directorio 
 ```
 
-![imagen 3](./capturas/rmdir_error.png)
+![imagen rmdir_error](./capturas/rmdir_error.png)
 
 Prueba donde se intenta eliminar un archivo y no un directorio:
 ```
@@ -90,7 +90,7 @@ Prueba donde se intenta eliminar un archivo y no un directorio:
 rmdir: fallo al borrar 'file': No es un directorio
 ```
 
-![imagen 4](./capturas/rmdir_eliminar_arch.png)
+![imagen rmdir_eliminar_arch](./capturas/rmdir_eliminar_arch.png)
 
 Prueba donde se intenta eliminar un directorio no vacio:
 ```
@@ -100,7 +100,7 @@ Prueba donde se intenta eliminar un directorio no vacio:
 rmdir: fallo al borrar 'noneemptydir': El directorio no esta vacio
 ```
 
-![imagen 1](./capturas/rmdir_dir_no_vacio.png)
+![imagen rmdir_dir_no_vacio](./capturas/rmdir_dir_no_vacio.png)
 
 ### fisops_write
 Prueba simple donde se intenta escribir un archivo
@@ -110,7 +110,7 @@ Prueba simple donde se intenta escribir un archivo
 Este es un test
 ```
 
-![imagen 1](./capturas/write_test_simple.png)
+![imagen write_test_simple](./capturas/write_test_simple.png)
 
 Luego intentamos escribir en un archivo ya creado mas cosas en el directorio, al principio y al final:
 ```
@@ -126,7 +126,7 @@ test
 Hola!
 ```
 
-![imagen 1](./capturas/write_archivo_ya_creado.png)
+![imagen write_archivo_ya_creado](./capturas/write_archivo_ya_creado.png)
 
 En esta prueba se intenta escribir un archivo en otro directorio:
 ```
@@ -138,14 +138,14 @@ bash: /new/test.txt: NO existe el archivo o el directorio
 hola de nuevo
 ```
 
-![imagen 1](./capturas/write_directorio.png)
+![imagen write_directorio](./capturas/write_directorio.png)
 
 En esta prueba se intenta escribir en algo que no es un archivo:
 ```
 /prueba$ echo "Este es un texto" > testdir/
 bash: testdir/: Es un directorio
 ```
-![imagen 1](./capturas/write_no_archivo.png)
+![imagen write_no_archivo](./capturas/write_no_archivo.png)
 ### fisopfs_readdir
 
 ### fisopfs_unlink
