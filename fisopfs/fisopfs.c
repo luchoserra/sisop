@@ -52,6 +52,8 @@ char fs_file[MAX_PATH] = "fs.fisopfs";
 
 // Remueve el slash del path pasado y devuelve unicamente el nombre del archivo
 // o directorio
+
+
 char *
 remove_slash(const char *path)
 {
@@ -231,22 +233,37 @@ new_inode(const char *path, mode_t mode, int type)
         char parent_path[MAX_PATH];
         memcpy(parent_path, path + 1, strlen(path) - 1);
         parent_path[strlen(path) - 1] = '\0';
+    if (type == FILE_T) {
+        char parent_path[MAX_PATH];
+        memcpy(parent_path, path + 1, strlen(path) - 1);
+        parent_path[strlen(path) - 1] = '\0';
 
+        get_parent_path(parent_path);
         get_parent_path(parent_path);
 
         if (strlen(parent_path) == 0) {
             strcpy(parent_path, ROOT_PATH);
         }
+        if (strlen(parent_path) == 0) {
+            strcpy(parent_path, ROOT_PATH);
+        }
 
         strcpy(new_inode.directory_path, parent_path);
+        strcpy(new_inode.directory_path, parent_path);
 
+    } else {
+        strcpy(new_inode.directory_path, ROOT_PATH);
+    }
     } else {
         strcpy(new_inode.directory_path, ROOT_PATH);
     }
 
     super.inodes[i] = new_inode;
     super.bitmap_inodes[i] = OCCUPIED;
+    super.inodes[i] = new_inode;
+    super.bitmap_inodes[i] = OCCUPIED;
 
+    return 0;
     return 0;
 }
 
@@ -559,48 +576,79 @@ fisopfs_rmdir(const char *path)
 // Inicializa el sistema de archivos cuando no existe el archivo fs.fisopfs en
 // el cual se guardan los datos del sistema de archivos. Crea dicho archivo e
 // inicializa el superbloque y el directorio raiz.
-int
-initialize_filesystem()
-{
-	memset(super.inodes, 0, sizeof(super.inodes));
-	memset(super.bitmap_inodes, 0, sizeof(super.bitmap_inodes));
 
-	struct inode *root_dir = &super.inodes[0];
-	root_dir->type = DIR;
-	root_dir->mode = __S_IFDIR | 0755;
-	root_dir->size = MAX_DIRECTORY_SIZE;
-	root_dir->uid = 1717;
-	root_dir->gid = getgid();
-	root_dir->last_access = time(NULL);
-	root_dir->last_modification = time(NULL);
-	root_dir->creation_time = time(NULL);
-	strcpy(root_dir->path, ROOT_PATH);
-	memset(root_dir->content, 0, sizeof(root_dir->content));
-	strcpy(root_dir->directory_path, "");
-	super.bitmap_inodes[0] = OCCUPIED;
-	return 0;
+static int fisopfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) {
+    // Inicializar el superbloque
+    memset(&super, 0, sizeof(struct super_block));
+
+    // Crear el directorio raíz
+    struct inode root_inode = {
+        .type = DIR,
+        .mode = __S_IFDIR | 0755,  // Permisos de directorio estándar
+        .size = 0,
+        .uid = getuid(),  // ID de usuario actual
+        .gid = getgid(),  // ID de grupo actual
+        .last_access = time(NULL),
+        .last_modification = time(NULL),
+        .creation_time = time(NULL),
+        .path = ROOT_PATH,
+        .content = "",
+        .directory_path = ""
+    };
+
+    // Usar next_free_inode_index para encontrar un inodo libre para la raíz
+    int free_inode_index = next_free_inode_index(ROOT_PATH);
+
+    // Verificar si se encontró un inodo libre
+    if (free_inode_index < 0) {
+        // Si next_free_inode_index devuelve un error (negativo)
+        fprintf(stderr, "Error al inicializar el sistema de archivos\n");
+        return free_inode_index;  // Devolver el código de error
+    }
+
+    // Guardar el inodo raíz en el índice libre
+    super.inodes[free_inode_index] = root_inode;
+    super.bitmap_inodes[free_inode_index] = OCCUPIED;
+
+    // Intentar guardar el superbloque en el archivo de filesystem
+    FILE *fs_file_ptr = fopen(fs_file, "wb");
+    if (fs_file_ptr == NULL) {
+        perror("Error al crear el archivo de filesystem");
+        return -errno;
+    }
+
+    // Escribir el superbloque completo en el archivo
+    size_t written = fwrite(&super, sizeof(struct super_block), 1, fs_file_ptr);
+    fclose(fs_file_ptr);
+
+    if (written != 1) {
+        perror("Error al escribir el superbloque");
+        return -EIO;
+    }
+    
+    return 0;
 }
 
-void *
-fisopfs_init(struct fuse_conn_info *conn)
-{
-	printf("[debug] fisop_init\n");
+// void *
+// fisopfs_init(struct fuse_conn_info *conn)
+// {
+// 	printf("[debug] fisop_init\n");
 
-	FILE *file = fopen(fs_file, "r");
-	if (!file) {
-		initialize_filesystem();
-	} else {
-		int i = fread(&super, sizeof(super), 1, file);
-		if (i != 1) {
-			fprintf(stderr,
-			        "[debug] Error init: %s\n",
-			        strerror(errno));
-			return NULL;
-		}
-		fclose(file);
-	}
-	return 0;
-}
+// 	FILE *file = fopen(fs_file, "r");
+// 	if (!file) {
+// 		initialize_filesystem();
+// 	} else {
+// 		int i = fread(&super, sizeof(super), 1, file);
+// 		if (i != 1) {
+// 			fprintf(stderr,
+// 			        "[debug] Error init: %s\n",
+// 			        strerror(errno));
+// 			return NULL;
+// 		}
+// 		fclose(file);
+// 	}
+// 	return 0;
+// }
 
 void
 fisopfs_destroy(void *private_data)
