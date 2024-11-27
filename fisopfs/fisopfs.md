@@ -69,12 +69,59 @@ Prueba simple para ver que se elimina el directorio:
 /prueba$ ls
 /prueba$ 
 ```
-Prueba para veri
-
-
+Prueba para ver que sucede si no existe el directorio:
+```
+/prueba$ rmdir /noneexistent
+rmdir: fallo al borrar '/noneexistent': No existe el archivo o el directorio 
+```
+Prueba donde se intenta eliminar un archivo y no un directorio:
+```
+/prueba$ touch file
+/prueba$ rmdir file
+rmdir: fallo al borrar 'file': No es un directorio
+```
+Prueba donde se intenta eliminar un directorio no vacio:
+```
+/prueba$ mkdir noneemptydir
+/prueba$ touch noneemptydir/file.txt
+/prueba$ rmdir noneemptydir
+rmdir: fallo al borrar 'noneemptydir': El directorio no esta vacio
+```
 
 ### fisops_write
-
+Prueba simple donde se intenta escribir un archivo
+```
+/prueba$ echo 'Este es un test' > testfile.txt
+/prueba$ cat testfile.txt
+Este es un test
+```
+Luego intentamos escribir en un archivo ya creado mas cosas en el directorio, al principio y al final:
+```
+/prueba$ echo 'test' > testfile.txt
+/prueba$ echo "Hola Mundo" > testfile.txt
+/prueba$ cat testfile.txt
+Hola Mundo
+test
+/prueba$ echo "Hola!" >> testfile.txt
+/prueba$cat testfile.txt
+Hola Mundo
+test
+Hola!
+```
+En esta prueba se intenta escribir un archivo en otro directorio:
+```
+/prueba$ mkdir new
+/prueba$ echo "hola de nuevo" > /new/test.txt
+bash: /new/test.txt: NO existe el archivo o el directorio
+/prueba$ echo "hola de nuevo" > new/test.txt
+/prueba$ cat new/test.txt
+hola de nuevo
+```
+En esta prueba se intenta escribir en algo que no es un archivo:
+```
+/prueba$ echo "Este es un texto" > testdir/
+bash: testdir/: Es un directorio
+```
 ### fisopfs_readdir
 
 ### fisopfs_unlink
