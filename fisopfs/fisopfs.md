@@ -147,5 +147,8 @@ bash: testdir/: Es un directorio
 ```
 ![imagen write_no_archivo](./capturas/write_no_archivo.png)
 ### fisopfs_readdir
+![imagen write_no_archivo](./capturas/readdir.png)
+
 
 ### fisopfs_unlink
+![imagen write_no_archivo](./capturas/unlink.png)
