@@ -385,50 +385,36 @@ fisopfs_unlink(const char *path)
 }
 
 /* Initialize the filesystem. This function can often be left unimplemented, but it can be a handy way to perform one-time setup such as allocating variable-sized data structures or initializing a new filesystem. The fuse_conn_info structure gives information about what features are supported by FUSE, and can be used to request certain capabilities (see below for more information). The return value of this function is available to all file operations in the private_data field of fuse_context. It is also passed as a parameter to the destroy() method. (Note: see the warning under Other Options below, regarding relative pathnames.) */
-static int 
-fisopfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg) 
+void *
+fisopfs_init(struct fuse_conn_info *conn)
 {
-    memset(&super, 0, sizeof(struct superblock));
+	printf("[debug] fisop_init\n");
 
-    struct inode root_inode = {
-        .type = INODE_DIR,
-        .mode = __S_IFDIR | 0755,
-        .size = 0,
-        .uid = getuid(),
-        .gid = getgid(),
-        .last_access = time(NULL),
-        .last_modification = time(NULL),
-        .creation_time = time(NULL),
-        .path = ROOT_PATH,
-        .content = "",
-        .directory_path = ""
-    };
-
-    int free_inode_index = next_free_inode_index(ROOT_PATH);
-
-    if (free_inode_index < 0) {
-        fprintf(stderr, "Error al inicializar el sistema de archivos\n");
-        return free_inode_index;
-    }
-
-    super.inodes[free_inode_index] = root_inode;
-    super.bitmap_inodes[free_inode_index] = OCCUPIED;
-
-    FILE *fs_file_ptr = fopen(fs_file, "wb");
-    if (fs_file_ptr == NULL) {
-        perror("Error al crear el archivo de filesystem");
-        return -errno;
-    }
-
-    size_t written = fwrite(&super, sizeof(struct superblock), 1, fs_file_ptr);
-    fclose(fs_file_ptr);
-
-    if (written != 1) {
-        perror("Error al escribir el superbloque");
-        return -EIO;
-    }
-    
-    return 0;
+	FILE *file = fopen(fs_file, "r");
+	if (!file) {
+		memset(super.inodes, 0, sizeof(super.inodes));
+		memset(super.bitmap_inodes, 0, sizeof(super.bitmap_inodes));
+		struct inode *root_dir = &super.inodes[0];
+		root_dir->type = INODE_DIR;
+		root_dir->mode = __S_IFDIR | 0755;
+		root_dir->size = MAX_DIRECTORY_SIZE;
+		root_dir->uid = 1717;
+		root_dir->gid = getgid();
+		root_dir->last_access = time(NULL);
+		root_dir->last_modification = time(NULL);
+		root_dir->creation_time = time(NULL);
+		strcpy(root_dir->path, ROOT_PATH);
+		memset(root_dir->content, 0, sizeof(root_dir->content));
+		strcpy(root_dir->directory_path, "");
+		super.bitmap_inodes[0] = OCCUPIED;
+	} else {
+		int i = fread(&super, sizeof(super), 1, file);
+		if (i != 1) {
+			return NULL;
+		}
+		fclose(file);
+	}
+	return 0;
 }
 
 /* As for read above, except that it can't return 0. */

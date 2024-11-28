@@ -21,6 +21,9 @@
         "type_traits": "c",
         "tuple": "c",
         "stat.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "time.h": "c",
+        "types.h": "c",
+        "stdio.h": "c"
     }
 }

@@ -1,6 +1,68 @@
-# fisop-fs
+# fisopfs-fs
 
 Lugar para respuestas en prosa y documentación del TP.
+
+# ASPECTOS DE DISEÑO
+
+## Descripción General
+
+Este documento detalla los aspectos principales del diseño del sistema de archivos, abarcando:
+
+- Las estructuras en memoria utilizadas para almacenar archivos, directorios y metadatos.
+- Los métodos de acceso a archivos dado un path.
+- Las estructuras auxiliares empleadas.
+- El formato de serialización del sistema de archivos en disco.
+
+---
+
+## Estructuras en Memoria
+
+### Estructuras Principales
+
+1. **Superbloque (`superblock`)**
+   - Contiene:
+     - Un arreglo de inodos (`inodes`).
+     - Un bitmap de inodos que indica si están libres (`FREE`) u ocupados (`OCCUPIED`).
+
+2. **Inodo (`inode`)**
+   - Representa un archivo o directorio y contiene los siguientes campos:
+     - `type`: Tipo del inodo (`file` o `directory`).
+     - `mode`: Permisos del archivo/directorio.
+     - `size`: Tamaño del contenido asociado.
+     - `uid`: ID del usuario propietario.
+     - `gid`: ID del grupo propietario.
+     - `last_access`: Tiempo del último acceso.
+     - `last_modification`: Tiempo de la última modificación.
+     - `creation_time`: Tiempo de creación.
+     - `path`: Ruta asociada al inodo.
+     - `content`: Contenido almacenado.
+     - `directory_path`: Ruta del directorio padre.
+
+### Estructuras Auxiliares
+
+- **Bitmap de Inodos**
+  - Un arreglo que indica si un inodo está libre (`FREE`) u ocupado (`OCCUPIED`).
+
+---
+
+## Cómo el Sistema Encuentra un Archivo Específico
+
+La búsqueda de un archivo dado un path se realiza mediante la función `get_inode_index`. Esta función:
+
+1. Verifica que el path no sea nulo ni vacío.
+2. Si el path es la raíz (`"/"`), retorna el índice `0`.
+3. Obtiene el nombre del archivo desde el path.
+4. Busca coincidencias recorriendo los inodos activos en el bitmap.
+
+### El Formato de Serialización del Sistema de Archivos en Disco
+
+La serialización del sistema de archivos en disco se realiza mediante el siguiente comando:
+
+```bash
+./fisopfs -f /prueba archivo_de_alocacion
+```
+
+## PRUEBAS
 
 ### fisopfs_read:
 
@@ -70,6 +132,18 @@ touch: falta un archivo como argumento
 Pruebe 'touch --help' para más información.
 ```
 ![imagen create](./capturas/create.png)
+
+### fisops_mkdir
+
+```
+/prueba$ mkdir directorio
+/prueba$ ls
+directorio
+/prueba$ mkdir
+mkdir: falta un operando
+Pruebe 'mkdir --help' para más información.
+```
+![imagen create](./capturas/prueba_mkdir.png)
 
 ### fisops_destroy
 ```
@@ -183,9 +257,24 @@ En esta prueba se intenta escribir en algo que no es un archivo:
 bash: testdir/: Es un directorio
 ```
 ![imagen write_no_archivo](./capturas/write_no_archivo.png)
+
 ### fisopfs_readdir
-![imagen write_no_archivo](./capturas/readdir.png)
+![imagen readdir](./capturas/readdir.png)
 
 
 ### fisopfs_unlink
-![imagen write_no_archivo](./capturas/unlink.png)
+![imagen unlink](./capturas/unlink.png)
+
+### fisops_init
+
+```
+/fisopfs$ cd prueba/
+/fisopfs/prueba$ mkdir a
+/fisopfs/prueba$ ls
+a
+/fisopfs/prueba$ cd ..
+/fisopfs$ cd prueba/
+/fisopfs/prueba$ ls
+a
+```
+![imagen init](./capturas/prueba_init.png)
