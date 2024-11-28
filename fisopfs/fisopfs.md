@@ -8,25 +8,56 @@ Lugar para respuestas en prosa y documentación del TP.
 /prueba$ mkdir hola
 /prueba$ touch hola/hola.txt
 /prueba$ echo "Hola!" > hola/hola.txt
+/prueba$ cat hola/hola.txt
+Hola!
 /prueba$ echo "Chau!" >> hola/hola.txt
 /prueba$ cat hola/hola.txt
 Hola!
 Chau!
+/prueba$ cat chau.txt
+cat: chau.txt: No existe el archivo o el directorio
+/prueba$ cat
+^C
+/prueba$ cd ..
+$ cd prueba
+/prueba$ mkdir hola
+/prueba$ touch hola/hola.txt
+/prueba$ echo "Hola!" > hola/hola.txt
+/prueba$ cat hola/hola.txt
+Hola!
+/prueba$ echo "Chau!" >> hola/hola.txt
+/prueba$ cat hola/hola.txt
+Hola!
+Chau!
+/prueba$ cat chau.txt
+cat: chau.txt: No existe el archivo o el directorio
+/prueba$ cat hola
+cat: hola: Es un directorio
 /prueba$ head -n 1 hola/hola.txt
 Hola!
+/prueba$ head -n 1 hola/chau.txt
+head: no se puede abrir 'hola/chau.txt' para lectura: No existe el archivo o el directorio
+/prueba$ head -n 1 hola
+head: error al leer 'hola': Es un directorio
+
 ```
+![imagen read](./capturas/read.png)
 
 ### fisopfs_truncate:
 
 ```
+/prueba$ mkdir hola
 /prueba$ touch hola.txt
 /prueba$ echo "Hola! ¿Cómo estas?" > hola.txt
 /prueba$ ls -lh hola.txt
--rw-r--r-- 1 usuario usuario 21 nov 26 00:52 hola.txt
+-rw-r--r-- 1 usuario usuario 21 nov 28 00:07 hola.txt
 /prueba$ truncate -s 10 hola.txt
 /prueba$ ls -lh hola.txt
--rw-r--r-- 1 usuario usuario 10 nov 26 00:53 hola.txt
+-rw-r--r-- 1 usuario usuario 10 nov 28 00:07 hola.txt
+/prueba$ ls -lh chau.txt
+ls: no se puede acceder a 'chau.txt': No existe el archivo o el directorio
 ```
+![imagen truncate](./capturas/truncate.png)
 
 ### fisops_create
 
@@ -34,7 +65,11 @@ Hola!
 /prueba$ touch hola.txt
 /prueba$ ls
 hola.txt
+/prueba$ touch
+touch: falta un archivo como argumento
+Pruebe 'touch --help' para más información.
 ```
+![imagen create](./capturas/create.png)
 
 ### fisops_destroy
 ```
