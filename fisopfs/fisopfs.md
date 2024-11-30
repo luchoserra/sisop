@@ -149,8 +149,9 @@ Pruebe 'mkdir --help' para más información.
 ```
 Primero, montar sobre la terminal como se indico previamente. Luego se puede modificar, crear o eliminar archivos con comandos como cat,touch,echo.
 Ejemplo, estando sobre el directorio prueba: 'touch mnt/test_destroy.txt' 'touch mnt/test_destroy.txt' o 'cat mnt/test_destroy' entre otros. L
-uego se debe desmontar siguiendo el comando 'sudo umount prueba'
+uego se debe desmontar siguiendo el comando 'sudo umount prueba'. En la imagen se aprecia la llamada a destroy luego de desmontar el file system.
 ```
+![imagen create](./capturas/destroy.png)
 
 ### fisops_getattr
 
