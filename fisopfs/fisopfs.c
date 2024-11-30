@@ -1,8 +1,8 @@
 #define FUSE_USE_VERSION 30
 #define MAX_CONTENT 1024
 #define MAX_DIRECTORY_SIZE 1024
-#define MAX_INODES 80
-#define MAX_PATH 200
+#define MAX_INODES 1024
+#define MAX_PATH 256
 #define ROOT_PATH "/"
 
 #include <fuse.h>
@@ -15,6 +15,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+
+char filedisk[MAX_PATH] = "fs.fisopfs";
 
 enum inode_type { INODE_FILE, INODE_DIR };
 enum bitmap_state { FREE, OCCUPIED };
@@ -39,8 +41,6 @@ struct superblock {
 };
 
 struct superblock super = {};
-
-char fs_file[MAX_PATH] = "fs.fisopfs";
 
 /* ========================================
  *               AUXILIARES
@@ -252,7 +252,6 @@ fisopfs_readdir(const char *path,
 	struct inode dir_inode = super.inodes[inode_index];
 
 	if (dir_inode.type != INODE_DIR) {
-		fprintf(stderr, "[debug] Error readdir: %s\n", path);
 		errno = -ENOTDIR;
 		return -ENOTDIR;
 	}
@@ -390,7 +389,7 @@ fisopfs_init(struct fuse_conn_info *conn)
 {
 	printf("[debug] fisop_init\n");
 
-	FILE *file = fopen(fs_file, "r");
+	FILE *file = fopen(filedisk, "r");
 	if (!file) {
 		memset(super.inodes, 0, sizeof(super.inodes));
 		memset(super.bitmap_inodes, 0, sizeof(super.bitmap_inodes));
@@ -467,7 +466,8 @@ void
 fisopfs_destroy(void *private_data)
 {
 	printf("[debug] fisop_destroy\n");
-	FILE *file = fopen(fs_file, "w");
+	
+	FILE *file = fopen(filedisk, "w");
 
 	if (!file) {
 		return;
@@ -490,6 +490,8 @@ fisopfs_destroy(void *private_data)
 int
 fisopfs_utimens(const char *path, const struct timespec tv[2])
 {
+	printf("[debug] fisop_utimens\n");
+
 	int inode_index = get_inode_index(path);
 	if (inode_index == -1) {
 		errno = ENOENT;
@@ -507,6 +509,7 @@ static int
 fisopfs_truncate(const char *path, off_t size)
 {
 	printf("[debug] fisopfs_truncate - path: %s\n", path);
+
 	if (size > MAX_CONTENT) {
 		errno = EINVAL;
 		return -EINVAL;
@@ -529,6 +532,7 @@ static void
 fisopfs_flush(const char *path, struct fuse_file_info *fi)
 {
 	printf("[debug] fisopfs_flush(%s)\n", path);
+	
 	return fisopfs_destroy(NULL);
 }
 
@@ -550,16 +554,15 @@ static struct fuse_operations operations = {
 int
 main(int argc, char *argv[])
 {
-	// El ultimo argumento es el path del archivo del fs, si es que se pasa
 	if (strcmp(argv[1], "-f") == 0) {
 		if (argc == 4) {
-			strcpy(fs_file, argv[3]);
+			strcpy(filedisk, argv[3]);
 			argv[3] = NULL;
 			argc--;
 		}
 	} else {
 		if (argc == 3) {
-			strcpy(fs_file, argv[2]);
+			strcpy(filedisk, argv[2]);
 			argv[2] = NULL;
 			argc--;
 		}
